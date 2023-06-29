@@ -343,18 +343,16 @@ public class Discord extends Thread {
             e.printStackTrace();
         }
 
-        final Thread unlink = new Thread(() -> {
-            for (PlayerLink p : PlayerLinkController.getAllLinks()) {
-                try {
-                    getChannel().getGuild().retrieveMemberById(p.discordID).submit();
-                } catch (ErrorResponseException e) {
-                    PlayerLinkController.unlinkPlayer(p.discordID);
+        if (Configuration.instance().linking.unlinkOnLeave)
+            WorkThread.executeJob(() -> {
+                for (PlayerLink p : PlayerLinkController.getAllLinks()) {
+                    try {
+                        getMemberById(Long.valueOf(p.discordID));
+                    } catch (ErrorResponseException e) {
+                        PlayerLinkController.unlinkPlayer(p.discordID);
+                    }
                 }
-            }
-        });
-        unlink.setName("Discord Integration Link Check");
-        unlink.setDaemon(true);
-        if (Configuration.instance().linking.unlinkOnLeave) unlink.start();
+            });
 
     }
 
@@ -475,7 +473,7 @@ public class Discord extends Thread {
      */
     public void startThreads() {
         if(Configuration.instance().commands.enabled) {
-            final Thread t = new Thread(() -> {
+            WorkThread.executeJob(() -> {
                 try {
                     CommandRegistry.updateSlashCommands();
                 } catch (IllegalStateException e) {
@@ -485,8 +483,6 @@ public class Discord extends Thread {
                     Variables.LOGGER.error("Failed to register slash commands! Please re-invite the bot to all servers the bot is on using this link: " + jda.getInviteUrl(Permission.getPermissions(2953964624L)).replace("scope=", "scope=applications.commands%20"));
                 }
             });
-            t.setDaemon(true);
-            t.start();
         }
         if (statusUpdater == null) statusUpdater = new StatusUpdateThread();
         if (messageSender == null) messageSender = new MessageQueueThread();
@@ -627,7 +623,7 @@ public class Discord extends Thread {
      */
     public void sendMessage(String name, DiscordMessage message, String avatarURL, MessageChannel channel, boolean isChatMessage, String uuid) {
         if (jda == null || channel == null) return;
-        final Thread t = new Thread(() -> {
+        WorkThread.executeJob(() -> {
             try {
                 if (Configuration.instance().webhook.enable) {
                     if (isChatMessage) message.setIsChatMessage();
@@ -648,9 +644,6 @@ public class Discord extends Thread {
                 e.printStackTrace();
             }
         });
-        t.setDaemon(true);
-        t.setName("Discord Integration - SendMessage");
-        t.start();
     }
 
     /**
