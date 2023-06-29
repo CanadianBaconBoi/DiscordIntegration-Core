@@ -345,12 +345,20 @@ public class Discord extends Thread {
 
         if (Configuration.instance().linking.unlinkOnLeave)
             WorkThread.executeJob(() -> {
+                int unlinked = 0;
                 for (PlayerLink p : PlayerLinkController.getAllLinks()) {
                     try {
-                        getMemberById(Long.valueOf(p.discordID));
+                        if(getMemberById(Long.valueOf(p.discordID)) == null) {
+                            PlayerLinkController.unlinkPlayer(p.discordID);
+                            unlinked++;
+                        }
                     } catch (ErrorResponseException e) {
                         PlayerLinkController.unlinkPlayer(p.discordID);
+                        unlinked++;
                     }
+                }
+                if (unlinked > 0) {
+                    Variables.LOGGER.warn(String.format("Unlinked %s missing DiscordUsers!", unlinked));
                 }
             });
 
