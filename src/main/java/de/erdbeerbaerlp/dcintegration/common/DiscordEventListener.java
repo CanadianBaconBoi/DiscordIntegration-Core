@@ -94,7 +94,7 @@ public class DiscordEventListener implements EventListener {
         }
         if (event instanceof GuildMemberRemoveEvent) {
             if (Configuration.instance().linking.unlinkOnLeave && PlayerLinkController.isDiscordLinked(((GuildMemberRemoveEvent) event).getUser().getId())) {
-                PlayerLinkController.unlinkPlayer(((GuildMemberRemoveEvent) event).getUser().getId());
+                PlayerLinkController.unlinkPlayer(((GuildMemberRemoveEvent) event).getUser().getId(), false);
             }
         }
         if (event instanceof final MessageReceivedEvent ev) {

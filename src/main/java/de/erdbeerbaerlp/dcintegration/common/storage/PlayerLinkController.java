@@ -466,6 +466,18 @@ public class PlayerLinkController {
      */
     @SuppressWarnings({"UnusedReturnValue", "ConstantConditions"})
     public static boolean unlinkPlayer(String discordID) {
+        return unlinkPlayer(discordID, true);
+    }
+
+    /**
+     * Unlinks a player and discord id
+     *
+     * @param discordID The discord ID to unlink
+     * @param inGuild Is user in guild?
+     * @return true, if unlinking was successful
+     */
+    @SuppressWarnings({"UnusedReturnValue", "ConstantConditions"})
+    public static boolean unlinkPlayer(String discordID, boolean inGuild) {
         if (!discord_instance.srv.isOnlineMode()) return false;
         if (!isDiscordLinked(discordID)) return false;
 
@@ -474,14 +486,17 @@ public class PlayerLinkController {
                 removePlayerLink(o.discordID);
                 discord_instance.linkDatabase.removeLink(o.discordID);
                 discord_instance.callEventC((a) -> a.onPlayerUnlink(UUID.fromString(o.mcPlayerUUID), discordID));
-                try {
-                    final Guild guild = discord_instance.getChannel().getGuild();
-                    guild.retrieveMemberById(discordID).submit().thenAccept((member) -> {
-                        final Role linkedRole = guild.getRoleById(Configuration.instance().linking.linkedRoleID);
-                        if (member.getRoles().contains(linkedRole))
-                            guild.removeRoleFromMember(member, linkedRole).queue();
-                    });
-                } catch (ErrorResponseException ignored) {
+
+                if(inGuild) {
+                    try {
+                        final Guild guild = discord_instance.getChannel().getGuild();
+                        guild.retrieveMemberById(discordID).submit().thenAccept((member) -> {
+                            final Role linkedRole = guild.getRoleById(Configuration.instance().linking.linkedRoleID);
+                            if (member.getRoles().contains(linkedRole))
+                                guild.removeRoleFromMember(member, linkedRole).queue();
+                        });
+                    } catch (ErrorResponseException ignored) {
+                    }
                 }
                 return true;
             }
