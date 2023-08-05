@@ -639,7 +639,7 @@ public class Discord extends Thread {
                     messages.forEach((builder) -> {
                         builder.setUsername(name);
                         builder.setAvatarUrl(avatarURL);
-                        getWebhookCli(channel.getId()).send(builder.build()).thenAccept((a) -> addRecentMessage(a.getId() + "", UUID.fromString(uuid)));
+                        getWebhookCli(channel.getId()).send(builder.build()).thenAccept((a) -> addRecentMessage(String.valueOf(a.getId()), UUID.fromString(uuid)));
                     });
                 } else if (isChatMessage) {
                     message.setMessage(Localization.instance().discordChatMessage.replace("%player%", name).replace("%msg%", message.getMessage()));
@@ -955,8 +955,8 @@ public class Discord extends Thread {
             while (true) {
                 if (jda != null) {
                     final String game = Configuration.instance().general.botStatusName
-                            .replace("%online%", "" + srv.getOnlinePlayers())
-                            .replace("%max%", "" + srv.getMaxPlayers());
+                            .replace("%online%", String.valueOf(srv.getOnlinePlayers()))
+                            .replace("%max%", String.valueOf(srv.getMaxPlayers()));
                     switch (Configuration.instance().general.botStatusType) {
                         case DISABLED:
                             break;
